@@ -31,7 +31,7 @@ const PROJECT_DIR = process.cwd();
 
 const TARGETS = [
   { name: 'Claude Code',   dir: '.claude/skills',           detect: '.claude' },
-  { name: 'Cursor',        dir: '.cursor/skills',           detect: '.cursor' },
+  { name: 'Cursor',        dir: '.cursor/skills',           detect: ['.cursor', '.cursorrules'] },
   { name: 'Codex CLI',     dir: '.codex/skills',            detect: '.codex' },
   { name: 'Kiro',          dir: '.kiro/steering',            detect: '.kiro' },
   { name: 'DeerFlow',      dir: 'skills/custom',             detect: 'deer_flow' },
@@ -77,7 +77,7 @@ function generateTraeBootstrapRule(projectDir) {
   const rulesDir = resolve(projectDir, '.trae', 'rules');
   mkdirSync(rulesDir, { recursive: true });
 
-  const skillEntries = scanSkillEntries(resolve(projectDir, '.trae', 'skills'));
+  const skillEntries = scanSkillEntries(SKILLS_SRC);
   const skillTable = skillEntries.map(s => `| ${s.name} | ${s.desc} |`).join('\n');
 
   const rule = `---
@@ -114,7 +114,7 @@ ${skillTable}
 }
 
 function generateAntigravityBootstrap(projectDir) {
-  const skillEntries = scanSkillEntries(resolve(projectDir, '.antigravity', 'skills'));
+  const skillEntries = scanSkillEntries(SKILLS_SRC);
   const skillList = skillEntries.map(s => `- **${s.name}**: ${s.desc}`).join('\n');
 
   const content = `# Superpowers-ZH 中文增强版
@@ -146,7 +146,7 @@ ${skillList}
 }
 
 function generateAiderBootstrap(projectDir) {
-  const skillEntries = scanSkillEntries(resolve(projectDir, '.aider', 'skills'));
+  const skillEntries = scanSkillEntries(SKILLS_SRC);
   const skillList = skillEntries.map(s => `- **${s.name}**: ${s.desc}`).join('\n');
 
   const content = `# Superpowers-ZH 工作方法论
@@ -189,7 +189,7 @@ ${skillList}
 }
 
 function generateGeminiBootstrap(projectDir) {
-  const skillEntries = scanSkillEntries(resolve(projectDir, '.gemini', 'skills'));
+  const skillEntries = scanSkillEntries(SKILLS_SRC);
   const skillList = skillEntries.map(s => `- **${s.name}**: ${s.desc}`).join('\n');
 
   const content = `# Superpowers-ZH 中文增强版
@@ -335,8 +335,9 @@ function install(forceToolName) {
   let installed = 0;
 
   for (const target of TARGETS) {
-    const detectPath = resolve(PROJECT_DIR, target.detect);
-    if (existsSync(detectPath)) {
+    const detects = Array.isArray(target.detect) ? target.detect : [target.detect];
+    const found = detects.some(d => existsSync(resolve(PROJECT_DIR, d)));
+    if (found) {
       installForTarget(target);
       installed++;
     }
