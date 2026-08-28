@@ -143,7 +143,7 @@ AI：在開始實作之前，我需要了解幾個關鍵問題：
 | [OpenCode](https://opencode.ai) | CLI | `npx superpowers-zh` | `.opencode/skills/` |
 | [OpenClaw](https://github.com/openclaw/openclaw) | CLI | `npx superpowers-zh` | `skills/` |
 | [Qwen Code](https://github.com/QwenLM/qwen-code) | CLI | `npx superpowers-zh` | `.qwen/skills/` + `QWEN.md` |
-| [Antigravity](https://antigravity.google) | CLI | `npx superpowers-zh` | `.agents/skills/` |
+| [Antigravity](https://antigravity.google) | IDE | `npx superpowers-zh` | `.agents/skills/` |
 | [Claw Code](https://github.com/ultraworkers/claw-code) | CLI (Rust) | `npx superpowers-zh` | `.claw/skills/` |
 | [Qoder](https://qoder.com) (阿里 AI IDE) | IDE | `npx superpowers-zh` | `.qoder/skills/` + `.qoder/rules/` |
 | [CodeBuddy](https://copilot.tencent.com) (騰訊 AI IDE) | IDE | `npx superpowers-zh` | `.codebuddy/skills/` + `CODEBUDDY.md` |
@@ -211,7 +211,7 @@ npx superpowers-zh --global --tool claude   # 或指定工具
 
 全域安裝把 skills 裝到工具的**使用者級目錄**（如 `~/.claude/skills`），一次安裝所有專案自動可用，更新時也只需重裝一次。**專案級優先、全域兜底**，二者可共存。
 
-支援通用全域安裝的工具（均為 docs 已證實的使用者級載入路徑）：**Claude Code · Codex CLI · Qoder · Windsurf · Qwen Code · OpenClaw · OpenCode · Crush · Hermes Agent · CodeBuddy**。其中 **Codex CLI** 全域裝到 `~/.agents/skills`（Codex 啟動掃描目錄）。其餘工具（Cursor / Kiro / Trae / Aider / DeerFlow / VS Code / Claw / Cline / Kilo Code / CodeArts）規則是專案級或存於應用內設定，`--global` 會提示改用專案級；**Gemini CLI / Antigravity** 有各自專屬的全域方式（Gemini 走擴充目錄），見對應 `docs/README.*.md`。
+支援通用全域安裝的工具（均為 docs 已證實的使用者級載入路徑）：**Claude Code · Codex CLI · Qoder · Windsurf · Qwen Code · OpenClaw · OpenCode · Crush · Hermes Agent · CodeBuddy · CodeArts**。其中 **Codex CLI** 全域裝到 `~/.agents/skills`（Codex 啟動掃描目錄）。其餘工具（Cursor / Kiro / Trae / Aider / DeerFlow / VS Code / Claw / Cline / Kilo Code）規則是專案級或存於應用內設定，`--global` 會提示改用專案級；**Gemini CLI / Antigravity** 有各自專屬的全域方式（Gemini 走擴充目錄），見對應 `docs/README.*.md`。
 
 | | 專案級（預設） | 全域（`--global`） |
 |---|---|---|

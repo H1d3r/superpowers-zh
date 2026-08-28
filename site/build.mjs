@@ -26,6 +26,8 @@ const jsVer = createHash('sha256').update(readFileSync(join(TEMPLATE, 'app.js'))
 
 // SEO：站点根 URL（用于 canonical / hreflang / og:url / sitemap）
 const SITE_URL = 'https://sp.aiolaola.com';
+// 仓库源码基址（skill 详情页的相对链接解析到这里）
+const GH_BLOB = 'https://github.com/jnMetaCode/superpowers-zh/blob/main';
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -81,27 +83,44 @@ const GROUPS = [
 ];
 
 // ---- 支持的工具（与 bin/superpowers-zh.js 的 TARGETS 对齐） ----
+// mode 决定安装命令与说明文案：
+//   auto   —— installer 有该工具的检测标记，`npx superpowers-zh` 直接识别
+//   manual —— 无检测标记（或与别的工具共用目录），必须 --tool 指定
+//   global —— 项目级目录不被工具自动加载，只有 --global 装到用户级才生效（Hermes）
+// 条目数必须等于对外宣称的工具数（TARGETS 22 条 + Copilot CLI 单独计数 = 23），
+// scripts/audit.sh 会卡这一点。
 const TOOLS = [
-  { name: 'Claude Code',    type: 'CLI',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'Cursor',         type: 'IDE',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'Windsurf',       type: 'IDE',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'Codex CLI',      type: 'CLI',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'Gemini CLI',     type: 'CLI',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'Kiro',           type: 'IDE',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'Trae',           type: 'IDE',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'Qoder',          type: 'IDE',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'Aider',          type: 'CLI',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'OpenCode',       type: 'CLI',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'Qwen Code',      type: 'IDE',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'Antigravity',    type: 'CLI',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'DeerFlow 2.0',   type: 'Agent',  cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'VS Code · Copilot', type: 'IDE', cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'Copilot CLI',    type: 'CLI',    cmd: 'npx superpowers-zh --tool copilot', auto: false },
-  { name: 'Hermes Agent',   type: 'CLI',    cmd: 'npx superpowers-zh --tool hermes',  auto: false },
-  { name: 'Claw Code',      type: 'CLI',    cmd: 'npx superpowers-zh --tool claw',    auto: false },
-  { name: 'OpenClaw',       type: 'CLI',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'CodeBuddy',      type: 'IDE',    cmd: 'npx superpowers-zh',                auto: true },
-  { name: 'CodeArts',       type: 'IDE',    cmd: 'npx superpowers-zh',                auto: true },
+  { name: 'Claude Code',    type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Cursor',         type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Windsurf',       type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Codex CLI',      type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Gemini CLI',     type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Kiro',           type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Trae',           type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Qoder',          type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Aider',          type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'OpenCode',       type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  // Qwen Code = QwenLM/qwen-code 这个命令行工具（Gemini CLI 的 fork），不是通义灵码。
+  { name: 'Qwen Code',      type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  // Antigravity 是 Google 的 AI IDE（antigravity.google），见 docs/README.antigravity.md。
+  { name: 'Antigravity',    type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'DeerFlow 2.0',   type: 'Agent',  cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'VS Code · Copilot', type: 'IDE', cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  // Copilot CLI 与 Claude Code 共用 .claude/skills，别名 copilot -> Claude Code，
+  // 它自己没有检测标记，所以必须 --tool 指定。
+  { name: 'Copilot CLI',    type: 'CLI',    cmd: 'npx superpowers-zh --tool copilot',           mode: 'manual' },
+  // Hermes 官方只自动加载 ~/.hermes/skills/，项目级目录要手写 config.yaml 才被发现，
+  // 所以这里给的是 --global 的装法（与 README 的一键安装列一致）。
+  { name: 'Hermes Agent',   type: 'CLI',    cmd: 'npx superpowers-zh --global --tool hermes',   mode: 'global' },
+  { name: 'Claw Code',      type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'OpenClaw',       type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'CodeBuddy',      type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'CodeArts',       type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  // Cline / Kilo Code 的检测标记是 rules 目录（.clinerules / .kilocode），没建过规则的
+  // 项目检测不到，与 README 一致给显式 --tool。
+  { name: 'Cline',          type: 'IDE',    cmd: 'npx superpowers-zh --tool cline',             mode: 'manual' },
+  { name: 'Kilo Code',      type: 'IDE',    cmd: 'npx superpowers-zh --tool kilocode',          mode: 'manual' },
+  { name: 'Crush',          type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
 ];
 
 // ---- 双语文案 ----
@@ -190,6 +209,7 @@ const T = {
     instLabel: '我用的是',
     instNoteAuto: '在你的项目根目录运行，<b>自动识别 {name}</b> 并安装。安装后重启工具即可生效。',
     instNoteManual: '{name} 无法自动识别，需用 <code>--tool</code> 显式指定。在项目根目录运行，安装后重启工具即可生效。',
+    instNoteGlobal: '{name} 只会自动加载用户级目录，项目级要手写配置才生效 —— 所以直接用 <code>--global</code> 装到用户级，在任意目录运行即可。',
     skTitle: '{n} 个 Skill，覆盖开发全流程',
     skSub: '点击任意卡片查看完整操作文档。',
     skSearch: '搜索 skill…（如 调试 / review / TDD）',
@@ -293,7 +313,7 @@ const T = {
       { q: '支持哪些 AI 编程工具？', a: '共 23 款：Claude Code、Cursor、Windsurf、Codex CLI、Gemini CLI、Kiro、Trae、Qoder、CodeBuddy（腾讯）、CodeArts（华为云码道）、Aider、OpenCode、Qwen Code、Antigravity、DeerFlow、VS Code(Copilot)、Copilot CLI、Hermes Agent、Claw Code、OpenClaw、Cline、Kilo Code、Crush。' },
       { q: 'superpowers-zh 有哪些独特价值？', a: '一套完整中文化的系统工作方法论：从头脑风暴、规划、TDD 到调试、代码审查，每个 skill 都是实战验证的工作流；并叠加 4 个面向中国开发者的原创 skill（中文代码审查 / Git 工作流 / 文档规范 / 提交规范），适配 23 款 AI 编程工具。MIT 协议开源，永久免费。' },
       { q: '安装后怎么生效？', a: 'npx 会把 skill 文件装到你项目对应工具的目录（如 .claude/skills/），重启 AI 工具后，它会在恰当时机自动触发相应 skill —— 无需你每次手动调用。' },
-      { q: '能一次装好、所有项目都用吗？（全局安装）', a: '能。npx superpowers-zh --global 装到工具的用户级目录（如 ~/.claude/skills），所有项目自动共享，更新时只需重装一次。项目级优先、全局兜底，二者可共存。支持全局的工具（均为各工具文档确认的加载路径）：Claude Code / Codex CLI / Qoder / Windsurf / Qwen Code / OpenClaw / OpenCode；其余工具（含 Gemini / Antigravity，有各自专属全局方式）请在项目内安装或参考对应文档。' },
+      { q: '能一次装好、所有项目都用吗？（全局安装）', a: '能。npx superpowers-zh --global 装到工具的用户级目录（如 ~/.claude/skills），所有项目自动共享，更新时只需重装一次。项目级优先、全局兜底，二者可共存。支持全局的工具（11 款，均为各工具文档确认的加载路径）：Claude Code / Codex CLI / Qoder / Windsurf / Qwen Code / OpenClaw / OpenCode / Hermes Agent / CodeBuddy / CodeArts / Crush；其余工具（含 Gemini / Antigravity，有各自专属全局方式）请在项目内安装或参考对应文档。' },
       { q: '会拖慢我的 AI 吗？会上传代码吗？', a: '不会。skill 是按需触发的纯 Markdown，零运行时、不联网、不上传任何代码或数据，全程在本地。' },
       { q: '怎么更新或卸载？', a: '更新：重新运行 npx superpowers-zh 覆盖即可。卸载：npx superpowers-zh --uninstall 清理当前项目；全局安装用 npx superpowers-zh --global --uninstall 清理。' },
     ],
@@ -321,6 +341,7 @@ const T = {
     instLabel: "I'm using",
     instNoteAuto: 'Run it in your project root — it <b>auto-detects {name}</b> and installs. Restart the tool to take effect.',
     instNoteManual: '{name} can\'t be auto-detected; pass <code>--tool</code> explicitly. Run in the project root, then restart the tool.',
+    instNoteGlobal: '{name} only auto-loads its user-level directory — a project-level install needs manual config. Install with <code>--global</code> instead; run it from anywhere.',
     skTitle: '{n} skills, covering the whole dev workflow',
     skSub: 'Click any card for the full operating doc.',
     skSearch: 'Search skills… (e.g. debug / review / TDD)',
@@ -424,7 +445,7 @@ const T = {
       { q: 'Which AI coding tools are supported?', a: '23 tools: Claude Code, Cursor, Windsurf, Codex CLI, Gemini CLI, Kiro, Trae, Qoder, CodeBuddy (Tencent), CodeArts (Huawei), Aider, OpenCode, Qwen Code, Antigravity, DeerFlow, VS Code (Copilot), Copilot CLI, Hermes Agent, Claw Code, OpenClaw, Cline, Kilo Code, Crush.' },
       { q: 'What makes superpowers-zh unique?', a: 'A fully localized, battle-tested methodology framework for Chinese developers: brainstorming, planning, TDD, debugging, and code-review skills, plus 4 China-native skills (code review / Git workflow / docs / commit conventions), adapted for 23 AI coding tools. MIT-licensed and free forever.' },
       { q: 'How does it take effect after install?', a: 'npx installs skill files into your tool\'s directory (e.g. .claude/skills/). After restarting your AI tool, it auto-triggers the right skill at the right moment — no manual invocation needed.' },
-      { q: 'Can I install once for all projects? (global install)', a: 'Yes. npx superpowers-zh --global installs into the tool\'s user-level directory (e.g. ~/.claude/skills), shared across all projects; you only re-install once to update. Project-level takes precedence, global is the fallback — they coexist. Tools with global support (all verified load paths per each tool\'s docs): Claude Code / Codex CLI / Qoder / Windsurf / Qwen Code / OpenClaw / OpenCode; other tools (incl. Gemini / Antigravity, which have their own global methods) should be installed per-project or via their docs.' },
+      { q: 'Can I install once for all projects? (global install)', a: 'Yes. npx superpowers-zh --global installs into the tool\'s user-level directory (e.g. ~/.claude/skills), shared across all projects; you only re-install once to update. Project-level takes precedence, global is the fallback — they coexist. Tools with global support (11 in total, all verified load paths per each tool\'s docs): Claude Code / Codex CLI / Qoder / Windsurf / Qwen Code / OpenClaw / OpenCode / Hermes Agent / CodeBuddy / CodeArts / Crush; other tools (incl. Gemini / Antigravity, which have their own global methods) should be installed per-project or via their docs.' },
       { q: 'Will it slow my AI down or upload my code?', a: 'No. Skills are on-demand Markdown: zero runtime, no network, no code or data upload — everything stays local.' },
       { q: 'How do I update or uninstall?', a: 'Update: re-run npx superpowers-zh to overwrite. Uninstall: npx superpowers-zh --uninstall for the current project; npx superpowers-zh --global --uninstall for a global install.' },
     ],
@@ -452,6 +473,7 @@ const T = {
     instLabel: '我用的是',
     instNoteAuto: '在你的專案根目錄執行，<b>自動識別 {name}</b> 並安裝。安裝後重啟工具即可生效。',
     instNoteManual: '{name} 無法自動識別，需用 <code>--tool</code> 顯式指定。在專案根目錄執行，安裝後重啟工具即可生效。',
+    instNoteGlobal: '{name} 只會自動載入使用者級目錄，專案級要手寫設定才生效 —— 所以直接用 <code>--global</code> 裝到使用者級，在任意目錄執行即可。',
     skTitle: '{n} 個 Skill，覆蓋開發全流程',
     skSub: '點擊任意卡片查看完整操作文件。',
     skSearch: '搜尋 skill…（如 除錯 / review / TDD）',
@@ -555,7 +577,7 @@ const T = {
       { q: '支援哪些 AI 編程工具？', a: '共 23 款：Claude Code、Cursor、Windsurf、Codex CLI、Gemini CLI、Kiro、Trae、Qoder、CodeBuddy（騰訊）、CodeArts（華為雲碼道）、Aider、OpenCode、Qwen Code、Antigravity、DeerFlow、VS Code(Copilot)、Copilot CLI、Hermes Agent、Claw Code、OpenClaw、Cline、Kilo Code、Crush。' },
       { q: 'superpowers-zh 有哪些獨特價值？', a: '一套完整中文化的系統工作方法論：從頭腦風暴、規劃、TDD 到除錯、程式碼審查，每個 skill 都是實戰驗證的工作流；並疊加 4 個面向中國開發者的原創 skill（中文程式碼審查 / Git 工作流 / 文件規範 / 提交規範），適配 23 款 AI 編程工具。MIT 協議開源，永久免費。' },
       { q: '安裝後怎麼生效？', a: 'npx 會把 skill 檔案裝到你專案對應工具的目錄（如 .claude/skills/），重啟 AI 工具後，它會在恰當時機自動觸發相應 skill —— 無需你每次手動呼叫。' },
-      { q: '能一次裝好、所有專案都用嗎？（全域安裝）', a: '能。npx superpowers-zh --global 裝到工具的使用者級目錄（如 ~/.claude/skills），所有專案自動共享，更新時只需重裝一次。專案級優先、全域兜底，二者可共存。支援全域的工具（均為各工具文件確認的載入路徑）：Claude Code / Codex CLI / Qoder / Windsurf / Qwen Code / OpenClaw / OpenCode；其餘工具（含 Gemini / Antigravity，有各自專屬全域方式）請在專案內安裝或參考對應文件。' },
+      { q: '能一次裝好、所有專案都用嗎？（全域安裝）', a: '能。npx superpowers-zh --global 裝到工具的使用者級目錄（如 ~/.claude/skills），所有專案自動共享，更新時只需重裝一次。專案級優先、全域兜底，二者可共存。支援全域的工具（11 款，均為各工具文件確認的載入路徑）：Claude Code / Codex CLI / Qoder / Windsurf / Qwen Code / OpenClaw / OpenCode / Hermes Agent / CodeBuddy / CodeArts / Crush；其餘工具（含 Gemini / Antigravity，有各自專屬全域方式）請在專案內安裝或參考對應文件。' },
       { q: '會拖慢我的 AI 嗎？會上傳程式碼嗎？', a: '不會。skill 是按需觸發的純 Markdown，零執行時、不連網、不上傳任何程式碼或資料，全程在本機。' },
       { q: '怎麼更新或解除安裝？', a: '更新：重新執行 npx superpowers-zh 覆蓋即可。解除安裝：npx superpowers-zh --uninstall 清理目前專案；全域安裝用 npx superpowers-zh --global --uninstall 清理。' },
     ],
@@ -693,7 +715,7 @@ function renderLanding(skills, lang) {
   const t = T[lang];
   const total = skills.length;
   const cnCount = skills.filter(s => s.china).length;
-  const toolData = JSON.stringify(TOOLS.map(x => ({ name: x.name, cmd: x.cmd, auto: x.auto })));
+  const toolData = JSON.stringify(TOOLS.map(x => ({ name: x.name, cmd: x.cmd, mode: x.mode })));
   const fill = (s, map) => s.replace(/\{(\w+)\}/g, (_, k) => map[k]);
 
   const cards = skills.map(s => {
@@ -710,7 +732,8 @@ function renderLanding(skills, lang) {
 
   const filters = GROUPS.map((g, i) =>
     `<button class="chip${i === 0 ? ' active' : ''}" data-filter="${g.id}">${lang === 'zh' ? g.zh : g.en}</button>`).join('');
-  const toolOpts = TOOLS.map((x, i) => `<option value="${i}">${esc(x.name)}${x.auto ? '' : '（--tool）'}</option>`).join('');
+  const modeTag = { auto: '', manual: '（--tool）', global: '（--global）' };
+  const toolOpts = TOOLS.map((x, i) => `<option value="${i}">${esc(x.name)}${modeTag[x.mode] || ''}</option>`).join('');
   const toolWall = TOOLS.map(x => `<div class="tool-pill"><span class="tool-name">${esc(x.name)}</span><span class="tool-type">${esc(x.type)}</span></div>`).join('');
   const feats = t.features.map(f => `<article class="feat"><div class="feat-icon">${f.icon}</div><h3>${esc(f.t)}</h3><p>${esc(f.d)}</p></article>`).join('');
   const pipe = t.pipeline.map((p, i) => `<div class="pl-step"><div class="pl-num">${i + 1}</div><div class="pl-body"><b>${esc(p.n)}</b><span>${esc(p.d)}</span></div></div>${i < t.pipeline.length - 1 ? '<div class="pl-arrow">→</div>' : ''}`).join('');
@@ -731,7 +754,7 @@ function renderLanding(skills, lang) {
     <div class="stats">
       <div><b>${total}</b><span>${t.stats[0]}</span></div>
       <div><b>${cnCount}</b><span>${t.stats[1]}</span></div>
-      <div><b>20</b><span>${t.stats[2]}</span></div>
+      <div><b>${TOOLS.length}</b><span>${t.stats[2]}</span></div>
       <div><b>v${PKG.version}</b><span>${t.stats[3]}</span></div>
     </div>
   </section>
@@ -810,7 +833,7 @@ function renderLanding(skills, lang) {
     </div>
   </div></section>
 </main>
-<script>window.__TOOLS__=${toolData};window.__I18N__={auto:${JSON.stringify(t.instNoteAuto)},manual:${JSON.stringify(t.instNoteManual)},copy:${JSON.stringify(t.copy)},copied:${JSON.stringify(t.copied)}};</script>`;
+<script>window.__TOOLS__=${toolData};window.__I18N__={auto:${JSON.stringify(t.instNoteAuto)},manual:${JSON.stringify(t.instNoteManual)},global:${JSON.stringify(t.instNoteGlobal)},copy:${JSON.stringify(t.copy)},copied:${JSON.stringify(t.copied)}};</script>`;
 }
 
 // ---- 赞助商独立页 ----
@@ -939,11 +962,14 @@ ${flagSection}${moreSection}
 function renderDetail(skill, lang) {
   const t = T[lang];
   const title = lang === 'en' ? skill.titleEn : skill.title;
-  const bodyHtml = renderMarkdown(skill.raw);
+  // 传入该 skill 在仓库里的目录 URL：SKILL.md 里指向兄弟文件的相对链接
+  // （implementer-prompt.md、../requesting-code-review/code-reviewer.md 等）
+  // 站点上并不存在，必须解析成 GitHub 地址，否则全是死链。
+  const bodyHtml = renderMarkdown(skill.raw, `${GH_BLOB}/skills/${skill.name}/`);
   const cnNotice = lang === 'en'
     ? '<div class="doc-notice">📖 This skill\'s content is written in Chinese — superpowers-zh is a Chinese-localized toolkit.</div>'
     : '';
-  const srcUrl = `https://github.com/jnMetaCode/superpowers-zh/blob/main/skills/${skill.name}/SKILL.md`;
+  const srcUrl = `${GH_BLOB}/skills/${skill.name}/SKILL.md`;
   return `
 <main class="doc">
   <a class="doc-back" href="../index.html#skills">${t.backToSkills}</a>
