@@ -262,7 +262,7 @@ if curl -sS -o /dev/null --max-time 5 https://github.com 2>/dev/null; then
   grep -rhoE "https://[a-zA-Z0-9./_-]+" "$REPO"/docs/*.md "$REPO"/README.md "$REPO"/README.zh-Hant.md 2>/dev/null \
     | grep -viE "jnmetacode|aiolaola|user-images|shields\.io|opensource\.org|makeapullrequest|npmjs\.com|compshare|cubence|claude\.ai/code" \
     | sed 's/[.,)]*$//' | sort -u \
-    | xargs -P 10 -I{} sh -c 'c=$(curl -sS -o /dev/null -w "%{http_code}" -L --max-time 8 "$1" 2>/dev/null); case "$c" in 2*|3*|403) ;; *) echo "$1" ;; esac' _ {} \
+    | xargs -P 10 -I{} sh -c 'c=$(curl -sS -o /dev/null -w "%{http_code}" -L --max-time 8 "$1" 2>/dev/null); case "$c" in 2*|3*|401|403|405|429) ;; *) echo "$1" ;; esac' _ {} \
     > "$LINKTMP" 2>/dev/null
   # 第二遍：只对嫌疑名单串行复核，放宽超时并让 curl 自己重试。两遍都判死才算死。
   suspects=$(wc -l < "$LINKTMP" | tr -d ' ')
@@ -271,8 +271,14 @@ if curl -sS -o /dev/null --max-time 5 https://github.com 2>/dev/null; then
     while read -r u; do
       [ -z "$u" ] && continue
       c=$(curl -sS -o /dev/null -w "%{http_code}" -L --max-time 25 --retry 2 --retry-delay 1 "$u" 2>/dev/null)
+      # 判活口径 = 「服务器答复了」，而不是「答复是 200」：
+      #   401 要登录、403 拒爬虫、405 不认 HEAD/GET 的方式、429 限流
+      #   —— 这四种都证明 URL 存在，只是不欢迎自动化访问。
+      # 429 是实测加的：windsurf.com 对反复验活稳定返回 429（浏览器 UA 也一样），
+      # 而链接本身是活的。判成死链就是误报，而误报的门禁会被学会忽略 —— 那还不如没有。
+      # 真正的死只有两种：4xx 里的 404/410，以及连不上（curl 返回空）。
       case "$c" in
-        2*|3*|403) ;;
+        2*|3*|401|403|405|429) ;;
         *) bad "死链（${c:-无响应}）: ${u}"; dead=$((dead+1)) ;;
       esac
     done < "$LINKTMP"
