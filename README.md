@@ -16,14 +16,14 @@ Chinese community edition of [superpowers](https://github.com/obra/superpowers) 
 >
 > 🌍 Also available in [English](https://aiolaola.com/en?utm_source=github&utm_campaign=superpowers) · [日本語](https://aiolaola.com/ja?utm_source=github&utm_campaign=superpowers) · [Español](https://aiolaola.com/es?utm_source=github&utm_campaign=superpowers) · [한국어](https://aiolaola.com/ko?utm_source=github&utm_campaign=superpowers) · [繁體中文](https://aiolaola.com/zh-Hant?utm_source=github&utm_campaign=superpowers)
 
-> 🆕 **v1.7.10 更新亮点** —— **Aider / Kiro / Hermes 用户请重装**（此前装了等于没装）：
+> 🆕 **v1.7.11 更新亮点** —— **Codex / VS Code / Windsurf / Qwen Code / DeerFlow / Claw Code 用户请重装**（此前装了等于没装）：
 >
-> - 🐛 **Aider** —— 真实 Aider 项目从来没被自动检测到过（它不创建 `.aider/` 目录），且 `CONVENTIONS.md` **不会**被自动加载（官方要求 `--read`）。现在检测认真实标记，装完打印激活命令
-> - 🐛 **Kiro** —— `.kiro/steering/` 下的文件**每轮对话全量进上下文**，而我们把 20 个 skill 正文全塞了进去：实测 **335 KB/轮**。改为索引式后 **4.4 KB**（76 倍），重装会自动清旧布局
-> - 🐛 **Hermes** —— 之前只装项目级 `.hermes/skills/`，而 Hermes 根本不读那个目录。现在改用 `npx superpowers-zh --global --tool hermes` 装到 `~/.hermes/skills/`
-> - 🆕 **新增 Crush**（工具数 22 → 23）—— 若你已为 CC / Cursor / Codex 装过，Crush 其实已经能读到，别重复装
+> - 🐛 **Codex CLI** —— 项目级装到 `.codex/skills`，而官方扫描清单里**从来没有这个目录**。改为 `.agents/skills`，重装会自动清旧位置
+> - 🐛 **VS Code (Copilot)** —— 装的 20 个文件 Copilot 一个都不读，且不写任何引导。现在生成 `.github/instructions/superpowers-zh.instructions.md`（`applyTo: "**"`）
+> - 🐛 **Windsurf** —— `--global` 装到 `~/.windsurf/skills`，官方用户级路径是 `~/.codeium/windsurf/skills/`。全局装过的请重装
+> - 🆕 **Qwen Code / Claw Code 补 bootstrap，CodeBuddy / CodeArts 补 `--global`**（全局支持 9 → 11 款）
 >
-> 📋 其余改动（Qoder 工具映射表更正、上游 v6.2.0 对齐、测试盲区补齐、Windows bootstrap 修复、SDD 同步…）见 **[完整 Release Notes →](RELEASE-NOTES.zh.md)**
+> 📋 其余改动（DeerFlow 检测标记、4 条死链含 2 条编造的仓库地址、官网工具墙 20 → 23、5 条新门禁…）见 **[完整 Release Notes →](RELEASE-NOTES.zh.md)**
 
 ### 📊 项目规模
 

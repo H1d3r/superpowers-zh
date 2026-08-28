@@ -16,14 +16,14 @@ Chinese community edition of [superpowers](https://github.com/obra/superpowers) 
 
 > 📖 **免費配套學習** → [從零學會 AI 編程](https://aiolaola.com/?utm_source=github&utm_campaign=superpowers)：180 節免費實操課 + 《AI 編程實戰三卷書》線上閱讀 + 實戰社群 · superpowers 裝好後配上方法論效率翻倍 · 永久免費
 
-> 🆕 **v1.7.10 更新亮點** —— **Aider / Kiro / Hermes 使用者請重裝**（此前裝了等於沒裝）：
+> 🆕 **v1.7.11 更新亮點** —— **Codex / VS Code / Windsurf / Qwen Code / DeerFlow / Claw Code 使用者請重裝**（此前裝了等於沒裝）：
 >
-> - 🐛 **Aider** —— 真實 Aider 專案從來沒被自動偵測到過（它不建立 `.aider/` 目錄），且 `CONVENTIONS.md` **不會**被自動載入（官方要求 `--read`）。現在偵測認真實標記，裝完列印啟用命令
-> - 🐛 **Kiro** —— `.kiro/steering/` 下的檔案**每輪對話全量進上下文**，而我們把 20 個 skill 正文全塞了進去：實測 **335 KB/輪**。改為索引式後 **4.4 KB**（76 倍），重裝會自動清舊佈局
-> - 🐛 **Hermes** —— 之前只裝專案級 `.hermes/skills/`，而 Hermes 根本不讀那個目錄。現在改用 `npx superpowers-zh --global --tool hermes` 裝到 `~/.hermes/skills/`
-> - 🆕 **新增 Crush**（工具數 22 → 23）—— 若你已為 CC / Cursor / Codex 裝過，Crush 其實已經能讀到，別重複裝
+> - 🐛 **Codex CLI** —— 專案級裝到 `.codex/skills`，而官方掃描清單裡**從來沒有這個目錄**。改為 `.agents/skills`，重裝會自動清舊位置
+> - 🐛 **VS Code (Copilot)** —— 裝的 20 個檔案 Copilot 一個都不讀，且不寫任何引導。現在產生 `.github/instructions/superpowers-zh.instructions.md`（`applyTo: "**"`）
+> - 🐛 **Windsurf** —— `--global` 裝到 `~/.windsurf/skills`，官方使用者級路徑是 `~/.codeium/windsurf/skills/`。全域裝過的請重裝
+> - 🆕 **Qwen Code / Claw Code 補 bootstrap，CodeBuddy / CodeArts 補 `--global`**（全域支援 9 → 11 款）
 >
-> 📋 其餘改動（Qoder 工具對映表更正、上游 v6.2.0 對齊、測試盲區補齊、Windows bootstrap 修復、SDD 同步…）見 **[完整 Release Notes →](RELEASE-NOTES.zh.md)**
+> 📋 其餘改動（DeerFlow 偵測標記、4 條死連結含 2 條編造的儲存庫地址、官網工具牆 20 → 23、5 條新門禁…）見 **[完整 Release Notes →](RELEASE-NOTES.zh.md)**
 
 ### 📊 專案規模
 
