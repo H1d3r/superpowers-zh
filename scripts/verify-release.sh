@@ -259,8 +259,16 @@ if curl -sS -o /dev/null --max-time 5 https://github.com 2>/dev/null; then
   # 第一遍并行快扫。注意这一遍**会误报** —— 实测 docs.codeium.com 在 8s 上限下
   # 偶发超时，而它其实活着。一个会误报的门禁比没有门禁更糟：人会学会忽略它。
   # 所以第一遍只产出「嫌疑名单」，不下结论。
-  grep -rhoE "https://[a-zA-Z0-9./_-]+" "$REPO"/docs/*.md "$REPO"/README.md "$REPO"/README.zh-Hant.md 2>/dev/null \
-    | grep -viE "jnmetacode|aiolaola|user-images|shields\.io|opensource\.org|makeapullrequest|npmjs\.com|compshare|cubence|claude\.ai/code" \
+  # 扫描范围含 site/build.mjs：官网的外链此前完全没人验活，而其中三条是**付费展位**的
+  # 推广链接（旗舰 + 两个常规位）—— 赞助链接挂掉是要赔的，比文档死链更该守。
+  # 正则含 ?=& ：推广链接的 aff / referral 参数在 query 里，截断了就等于没验真正那条。
+  # 排除项说明：
+  #   jnmetacode / aiolaola —— 自家域名（含站点自引用），挂了自己会先知道
+  #   npmjs / shields / user-images / opensource / makeapullrequest —— 已知对爬虫不友好或纯徽章
+  #   googletagmanager / google-analytics —— 它们在 build.mjs 里是 **CSP 白名单条目**不是链接；
+  #     裸域 googletagmanager.com 本身返回 404，纳入就是凭空造一条误报
+  grep -rhoE "https://[a-zA-Z0-9./_?=&-]+" "$REPO"/docs/*.md "$REPO"/README.md "$REPO"/README.zh-Hant.md "$REPO"/site/build.mjs 2>/dev/null \
+    | grep -viE "jnmetacode|aiolaola|user-images|shields\.io|opensource\.org|makeapullrequest|npmjs\.com|claude\.ai/code|googletagmanager|google-analytics" \
     | sed 's/[.,)]*$//' | sort -u \
     | xargs -P 10 -I{} sh -c 'c=$(curl -sS -o /dev/null -w "%{http_code}" -L --max-time 8 "$1" 2>/dev/null); case "$c" in 2*|3*|401|403|405|429) ;; *) echo "$1" ;; esac' _ {} \
     > "$LINKTMP" 2>/dev/null

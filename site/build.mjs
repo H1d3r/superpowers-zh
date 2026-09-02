@@ -24,10 +24,41 @@ const PKG = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 const cssVer = createHash('sha256').update(readFileSync(join(TEMPLATE, 'styles.css'))).digest('hex').slice(0, 10);
 const jsVer = createHash('sha256').update(readFileSync(join(TEMPLATE, 'app.js'))).digest('hex').slice(0, 10);
 
+// 页脚二维码的真实像素尺寸，构建时从文件读取（见 imageSize 的注释）
+const QR = {
+  wechat: imageSize(join(TEMPLATE, 'assets', 'qr-wechat.jpg')),
+  douyin: imageSize(join(TEMPLATE, 'assets', 'qr-douyin.jpg')),
+  x:      imageSize(join(TEMPLATE, 'assets', 'qr-x.png')),
+};
+
 // SEO：站点根 URL（用于 canonical / hreflang / og:url / sitemap）
 const SITE_URL = 'https://sp.aiolaola.com';
 // 仓库源码基址（skill 详情页的相对链接解析到这里）
 const GH_BLOB = 'https://github.com/jnMetaCode/superpowers-zh/blob/main';
+
+// 读 PNG / JPEG 的真实像素尺寸（零依赖）。
+// 用途：<img> 必须带 width+height，浏览器才能在图加载前按宽高比预留位置，
+// 否则图一到位就把下面的内容顶下去（CLS）。页脚三个二维码此前只有 width。
+// 不写死数字而是读文件：换二维码时属性自动跟着变，不会悄悄变回错的比例。
+function imageSize(file) {
+  const b = readFileSync(file);
+  if (b.length > 24 && b[0] === 0x89 && b[1] === 0x50) {          // PNG: IHDR 定长在头部
+    return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) };
+  }
+  if (b[0] === 0xff && b[1] === 0xd8) {                            // JPEG: 逐段找 SOFn
+    let i = 2;
+    while (i < b.length - 9) {
+      if (b[i] !== 0xff) { i++; continue; }
+      const m = b[i + 1];
+      // SOF0-SOF3 / SOF5-SOF7 / SOF9-SOF11 / SOF13-SOF15 都带尺寸；DHT(c4)/JPG(c8)/DAC(cc) 不是
+      if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) {
+        return { h: b.readUInt16BE(i + 5), w: b.readUInt16BE(i + 7) };
+      }
+      i += 2 + b.readUInt16BE(i + 2);
+    }
+  }
+  throw new Error(`无法解析图片尺寸：${file}`);
+}
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -245,6 +276,13 @@ function assertSponsors() {
     for (const f of [s.img, s.logo].filter(Boolean)) {
       if (!existsSync(join(ROOT, 'assets', 'sponsors', f))) {
         throw new Error(`赞助商 ${s.name?.zh || '?'} 的素材不存在：assets/sponsors/${f}`);
+      }
+      // 声明的 w/h 必须与素材真实尺寸一致 —— 换了图忘了改数字，页面就按错的宽高比预留位置
+      if (f === s.img) {
+        const real = imageSize(join(ROOT, 'assets', 'sponsors', f));
+        if (real.w !== s.w || real.h !== s.h) {
+          throw new Error(`赞助商 ${s.name?.zh || '?'} 的 banner 尺寸对不上：声明 ${s.w}×${s.h}，实际 ${real.w}×${real.h}`);
+        }
       }
     }
     const textKeys = s.tier === 'flagship'
@@ -772,9 +810,9 @@ ${body}
   <div class="foot-qr">
     <h4 class="qr-title">${t.followUs}</h4>
     <div class="qr-row">
-      <figure class="qr-card"><img src="/assets/qr-wechat.jpg" alt="${esc(t.qrWechat)}" width="158" loading="lazy"><figcaption>${t.qrWechat}</figcaption></figure>
-      <figure class="qr-card"><img src="/assets/qr-douyin.jpg" alt="${esc(t.qrDouyin)}" width="158" loading="lazy"><figcaption>${t.qrDouyin}</figcaption></figure>
-      <figure class="qr-card"><a href="https://x.com/jnMetaCode" target="_blank" rel="noopener"><img src="/assets/qr-x.png" alt="${esc(t.qrX)}" width="158" loading="lazy"></a><figcaption><a href="https://x.com/jnMetaCode" target="_blank" rel="noopener">${t.qrX}</a></figcaption></figure>
+      <figure class="qr-card"><img src="/assets/qr-wechat.jpg" alt="${esc(t.qrWechat)}" width="${QR.wechat.w}" height="${QR.wechat.h}" loading="lazy"><figcaption>${t.qrWechat}</figcaption></figure>
+      <figure class="qr-card"><img src="/assets/qr-douyin.jpg" alt="${esc(t.qrDouyin)}" width="${QR.douyin.w}" height="${QR.douyin.h}" loading="lazy"><figcaption>${t.qrDouyin}</figcaption></figure>
+      <figure class="qr-card"><a href="https://x.com/jnMetaCode" target="_blank" rel="noopener"><img src="/assets/qr-x.png" alt="${esc(t.qrX)}" width="${QR.x.w}" height="${QR.x.h}" loading="lazy"></a><figcaption><a href="https://x.com/jnMetaCode" target="_blank" rel="noopener">${t.qrX}</a></figcaption></figure>
     </div>
   </div>
   <div class="foot-inner foot-cols">
