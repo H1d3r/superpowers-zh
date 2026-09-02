@@ -45,7 +45,7 @@ const REINSTALL_TOOLS = ['Codex CLI', 'VS Code', 'Windsurf', 'Qwen Code', 'DeerF
 // 页脚二维码的真实像素尺寸，构建时从文件读取（见 imageSize 的注释）
 const QR = {
   wechat: imageSize(join(TEMPLATE, 'assets', 'qr-wechat.jpg')),
-  douyin: imageSize(join(TEMPLATE, 'assets', 'qr-douyin.jpg')),
+  douyin: imageSize(join(TEMPLATE, 'assets', 'qr-douyin.png')),
   x:      imageSize(join(TEMPLATE, 'assets', 'qr-x.png')),
 };
 
@@ -846,7 +846,7 @@ ${body}
     <h4 class="qr-title">${t.followUs}</h4>
     <div class="qr-row">
       <figure class="qr-card"><img src="/assets/qr-wechat.jpg" alt="${esc(t.qrWechat)}" width="${QR.wechat.w}" height="${QR.wechat.h}" loading="lazy"><figcaption>${t.qrWechat}</figcaption></figure>
-      <figure class="qr-card"><img src="/assets/qr-douyin.jpg" alt="${esc(t.qrDouyin)}" width="${QR.douyin.w}" height="${QR.douyin.h}" loading="lazy"><figcaption>${t.qrDouyin}</figcaption></figure>
+      <figure class="qr-card"><img src="/assets/qr-douyin.png" alt="${esc(t.qrDouyin)}" width="${QR.douyin.w}" height="${QR.douyin.h}" loading="lazy"><figcaption>${t.qrDouyin}</figcaption></figure>
       <figure class="qr-card"><a href="https://x.com/jnMetaCode" target="_blank" rel="noopener"><img src="/assets/qr-x.png" alt="${esc(t.qrX)}" width="${QR.x.w}" height="${QR.x.h}" loading="lazy"></a><figcaption><a href="https://x.com/jnMetaCode" target="_blank" rel="noopener">${t.qrX}</a></figcaption></figure>
     </div>
   </div>
@@ -1179,7 +1179,7 @@ function build() {
   copyFileSync(join(ROOT, 'assets', 'app-icon.png'), join(DIST, 'assets', 'app-icon.png'));
   copyFileSync(join(ROOT, 'assets', 'superpowers-small.svg'), join(DIST, 'assets', 'superpowers-small.svg'));
   copyFileSync(join(TEMPLATE, 'assets', 'qr-wechat.jpg'), join(DIST, 'assets', 'qr-wechat.jpg'));
-  copyFileSync(join(TEMPLATE, 'assets', 'qr-douyin.jpg'), join(DIST, 'assets', 'qr-douyin.jpg'));
+  copyFileSync(join(TEMPLATE, 'assets', 'qr-douyin.png'), join(DIST, 'assets', 'qr-douyin.png'));
   copyFileSync(join(TEMPLATE, 'assets', 'qr-x.png'), join(DIST, 'assets', 'qr-x.png'));
   mkdirSync(join(DIST, 'assets', 'sponsors'), { recursive: true });
   for (const s of SPONSORS) {
