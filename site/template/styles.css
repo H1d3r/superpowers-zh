@@ -357,6 +357,13 @@ footer { border-top: 1px solid var(--border-soft); margin-top: 40px; padding: 40
 .flag-body h3 { font-size: 19px; font-weight: 700; }
 .flag-tag { font-size: 13.5px; color: var(--accent-2); font-weight: 600; margin: 6px 0 12px; }
 .flag-desc { font-size: 14px; color: var(--text-dim); line-height: 1.75; }
+/* 旗舰卡的要点分段：图标定宽一列，标题与说明同一行起排 */
+.flag-points { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.flag-points li { display: flex; gap: 10px; align-items: flex-start; }
+.flag-points .fp-icon { flex: 0 0 auto; font-size: 15px; line-height: 1.6; }
+.flag-points li > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.flag-points b { font-size: 14px; font-weight: 650; color: var(--text); }
+.flag-points span:not(.fp-icon) { font-size: 13.5px; color: var(--text-dim); line-height: 1.7; }
 .flag-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
 .flag-foot .sponsor-perk { margin: 0; flex: 1 1 320px; }
 .flag-foot .btn { flex: 0 0 auto; padding: 10px 20px; font-size: 14px; }

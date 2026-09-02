@@ -41,9 +41,15 @@ Chinese community edition of [superpowers](https://github.com/obra/superpowers) 
   </a>
 </p>
 
-感谢 [Infistar.cc 无限星河](https://www.infistar.cc/register?aff=PDVTM2VS&ref_source=link) 旗舰赞助本项目！Infistar.cc 提供全模型 API 服务：**一个 API Key 接入** Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek 等主流模型，适配 Claude Code、Codex、Cursor、Windsurf、Kiro 等 AI 编程工具。高可用模型通道与多节点冗余，价格低至官方渠道 **1 折**，稳定承载需求分析、方案规划、TDD、调试、代码审查这类长任务 —— 正好是 superpowers-zh 这套方法论跑起来时最吃稳定性的地方。
+**superpowers-zh × [Infistar.cc 无限星河](https://www.infistar.cc/register?aff=PDVTM2VS&ref_source=link)｜全模型 API · 为 AI 编程注入稳定动力**
 
-🎁 **通过[此链接](https://www.infistar.cc/register?aff=PDVTM2VS&ref_source=link)注册并完成首次调用，即可领取 5 美元等值测试额度！**
+感谢 Infistar.cc 无限星河 赞助并为 superpowers-zh 用户提供模型服务支持！
+
+- ⚡ **稳定承载复杂开发任务**：提供高可用模型通道与多节点冗余，价格低至官方渠道 **1 折**，稳定支持需求分析、方案规划、TDD、调试及代码审查等长任务。
+- 🧠 **一个 API Key 接入主流模型**：全面支持 Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek 等模型，适配 Claude Code、Codex、Cursor、Windsurf、Kiro 等 AI 编程工具。
+- 🛠️ **赋能完整开发工作流**：结合 superpowers-zh 的系统化 Skills，让 AI 更好地完成头脑风暴、计划执行、问题排查和质量检查。
+
+🎁 **superpowers-zh 用户专属福利：通过[此链接](https://www.infistar.cc/register?aff=PDVTM2VS&ref_source=link)注册并完成首次调用，即可领取 5 美元等值测试额度！**
 
 <hr>
 

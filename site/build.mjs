@@ -144,10 +144,24 @@ const SPONSORS = [
       en: 'Infistar.cc — all-model API service: one API key for Claude, ChatGPT, Gemini, Kimi, GLM and DeepSeek, from 10% of official pricing',
       zht: 'Infistar.cc 無限星河 —— 全模型 API 服務，一個 API Key 接入 Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek，價格低至官方渠道 1 折',
     },
-    desc: {
-      zh: '全模型 API 服务：一个 API Key 接入 Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek 等主流模型，适配 Claude Code、Codex、Cursor、Windsurf、Kiro 等 AI 编程工具。高可用通道与多节点冗余，价格低至官方渠道 1 折，稳定承载需求分析、方案规划、TDD、调试、代码审查这类长任务 —— 正好是 superpowers-zh 这套方法论跑起来时最吃稳定性的地方。',
-      en: 'An all-model API service: one API key for Claude, ChatGPT, Gemini, Kimi, GLM and DeepSeek, wired for Claude Code, Codex, Cursor, Windsurf and Kiro. High-availability channels with multi-node redundancy, from 10% of official pricing, built to hold up across long tasks — requirements analysis, planning, TDD, debugging, code review — exactly where the superpowers-zh workflow leans hardest on stability.',
-      zht: '全模型 API 服務：一個 API Key 接入 Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek 等主流模型，適配 Claude Code、Codex、Cursor、Windsurf、Kiro 等 AI 編程工具。高可用通道與多節點冗餘，價格低至官方渠道 1 折，穩定承載需求分析、方案規劃、TDD、除錯、程式碼審查這類長任務 —— 正好是 superpowers-zh 這套方法論跑起來時最吃穩定性的地方。',
+    // 旗舰卡按赞助商原文的三条要点分段展示（常规卡才用整段 desc）。
+    // 压成一整段会把人家文案的骨架揉掉，也不好扫读 —— 付费展位按原结构呈现。
+    points: {
+      zh: [
+        { icon: '⚡', t: '稳定承载复杂开发任务', d: '高可用模型通道与多节点冗余，价格低至官方渠道 1 折，稳定支持需求分析、方案规划、TDD、调试及代码审查等长任务。' },
+        { icon: '🧠', t: '一个 API Key 接入主流模型', d: '全面支持 Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek 等模型，适配 Claude Code、Codex、Cursor、Windsurf、Kiro 等 AI 编程工具。' },
+        { icon: '🛠️', t: '赋能完整开发工作流', d: '结合 superpowers-zh 的系统化 Skills，让 AI 更好地完成头脑风暴、计划执行、问题排查和质量检查。' },
+      ],
+      en: [
+        { icon: '⚡', t: 'Built for long-running dev tasks', d: 'High-availability model channels with multi-node redundancy, from 10% of official pricing — steady across requirements analysis, planning, TDD, debugging and code review.' },
+        { icon: '🧠', t: 'One API key, every major model', d: 'Full support for Claude, ChatGPT, Gemini, Kimi, GLM and DeepSeek, wired for Claude Code, Codex, Cursor, Windsurf and Kiro.' },
+        { icon: '🛠️', t: 'Powers the whole workflow', d: 'Paired with the systematic skills in superpowers-zh, so the AI holds up through brainstorming, plan execution, troubleshooting and quality checks.' },
+      ],
+      zht: [
+        { icon: '⚡', t: '穩定承載複雜開發任務', d: '高可用模型通道與多節點冗餘，價格低至官方渠道 1 折，穩定支援需求分析、方案規劃、TDD、除錯及程式碼審查等長任務。' },
+        { icon: '🧠', t: '一個 API Key 接入主流模型', d: '全面支援 Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek 等模型，適配 Claude Code、Codex、Cursor、Windsurf、Kiro 等 AI 編程工具。' },
+        { icon: '🛠️', t: '賦能完整開發工作流', d: '結合 superpowers-zh 的系統化 Skills，讓 AI 更好地完成頭腦風暴、計畫執行、問題排查和品質檢查。' },
+      ],
     },
     perk: {
       zh: '🎁 通过本页链接注册并完成首次调用，即可领取 5 美元等值测试额度',
@@ -223,7 +237,7 @@ const SPONSORS = [
 // 页面上就是一个静默的碎图。构建时直接拦下来，不让它上线。
 function assertSponsors() {
   for (const s of SPONSORS) {
-    const need = s.tier === 'flagship' ? ['img', 'w', 'h'] : ['logo'];
+    const need = s.tier === 'flagship' ? ['img', 'w', 'h', 'points'] : ['logo', 'desc'];
     const missing = need.filter(k => !s[k]);
     if (missing.length) {
       throw new Error(`赞助商 ${s.name?.zh || '?'}（tier: ${s.tier}）缺字段：${missing.join(', ')}`);
@@ -233,10 +247,24 @@ function assertSponsors() {
         throw new Error(`赞助商 ${s.name?.zh || '?'} 的素材不存在：assets/sponsors/${f}`);
       }
     }
-    for (const k of ['name', 'tagline', 'alt', 'desc', 'perk', 'perkShort']) {
-      if (s.tier !== 'flagship' && k === 'tagline') continue;   // 常规卡不展示 tagline
+    const textKeys = s.tier === 'flagship'
+      ? ['name', 'tagline', 'alt', 'perk', 'perkShort']
+      : ['name', 'alt', 'desc', 'perk', 'perkShort'];   // 常规卡不展示 tagline
+    for (const k of textKeys) {
       for (const lang of ['zh', 'en', 'zht']) {
         if (!s[k]?.[lang]) throw new Error(`赞助商 ${s.name?.zh || '?'} 的 ${k} 缺 ${lang} 文案`);
+      }
+    }
+    // 旗舰的要点分段：三语条数必须一致，少一条就是某个语言漏翻了
+    if (s.tier === 'flagship') {
+      const counts = ['zh', 'en', 'zht'].map(l => s.points?.[l]?.length || 0);
+      if (counts.some(n => n === 0) || new Set(counts).size > 1) {
+        throw new Error(`赞助商 ${s.name?.zh || '?'} 的 points 三语条数不一致：zh/en/zht = ${counts.join('/')}`);
+      }
+      for (const l of ['zh', 'en', 'zht']) {
+        for (const pt of s.points[l]) {
+          if (!pt.icon || !pt.t || !pt.d) throw new Error(`赞助商 ${s.name?.zh || '?'} 的 ${l} 要点缺 icon/t/d`);
+        }
       }
     }
   }
@@ -911,7 +939,9 @@ function renderSponsors(lang) {
       <div class="flag-body">
         <h3>${esc(s.name[lang])}</h3>
         <p class="flag-tag">${esc(s.tagline[lang])}</p>
-        <p class="flag-desc">${esc(s.desc[lang])}</p>
+        <ul class="flag-points">${s.points[lang].map(pt => `
+          <li><span class="fp-icon" aria-hidden="true">${pt.icon}</span><div><b>${esc(pt.t)}</b><span>${esc(pt.d)}</span></div></li>`).join('')}
+        </ul>
         <div class="flag-foot">
           <span class="sponsor-perk">${esc(s.perk[lang])}</span>
           <a class="btn btn-primary" href="${esc(s.url)}" target="_blank" rel="sponsored nofollow noopener">${esc(sp.visitFlag)}</a>
