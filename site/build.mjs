@@ -24,6 +24,24 @@ const PKG = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 const cssVer = createHash('sha256').update(readFileSync(join(TEMPLATE, 'styles.css'))).digest('hex').slice(0, 10);
 const jsVer = createHash('sha256').update(readFileSync(join(TEMPLATE, 'app.js'))).digest('hex').slice(0, 10);
 
+// 从 RELEASE-NOTES.zh.md 读最新版本条目。
+// 动机：v1.7.11 的全部意义是「六款工具此前装了不生效，请重装」，而官网此前
+// 一个字都没提 —— 上周装过的用户来站上看不到任何提示。版本号不手写，从
+// release notes 解析，再与 package.json 交叉校验，两边漂了就构建失败。
+function latestRelease() {
+  const md = readFileSync(join(ROOT, 'RELEASE-NOTES.zh.md'), 'utf8');
+  const m = md.match(/^## v(\d+\.\d+\.\d+)\s*\(([\d-]+)\)/m);
+  if (!m) throw new Error('RELEASE-NOTES.zh.md 里找不到形如「## v1.2.3 (2026-01-01)」的最新条目');
+  return { version: m[1], date: m[2] };
+}
+const LATEST = latestRelease();
+if (LATEST.version !== PKG.version) {
+  throw new Error(`版本漂移：package.json 是 ${PKG.version}，RELEASE-NOTES.zh.md 最新条目是 v${LATEST.version} —— 发版时漏改了一边`);
+}
+
+// 本版需要重装的工具（三语共用；产品名不翻译）。改这里时同步改 release notes 正文。
+const REINSTALL_TOOLS = ['Codex CLI', 'VS Code', 'Windsurf', 'Qwen Code', 'DeerFlow', 'Claw Code'];
+
 // 页脚二维码的真实像素尺寸，构建时从文件读取（见 imageSize 的注释）
 const QR = {
   wechat: imageSize(join(TEMPLATE, 'assets', 'qr-wechat.jpg')),
@@ -123,35 +141,35 @@ const GROUPS = [
 const TOOLS = [
   { name: 'Claude Code',    type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
   { name: 'Cursor',         type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'Windsurf',       type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'Codex CLI',      type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'Gemini CLI',     type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'Kiro',           type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'Trae',           type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'Qoder',          type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'Aider',          type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'OpenCode',       type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Windsurf',       type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'windsurf' },
+  { name: 'Codex CLI',      type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'codex' },
+  { name: 'Gemini CLI',     type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'gemini-cli' },
+  { name: 'Kiro',           type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'kiro' },
+  { name: 'Trae',           type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'trae' },
+  { name: 'Qoder',          type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'qoder' },
+  { name: 'Aider',          type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'aider' },
+  { name: 'OpenCode',       type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'opencode' },
   // Qwen Code = QwenLM/qwen-code 这个命令行工具（Gemini CLI 的 fork），不是通义灵码。
-  { name: 'Qwen Code',      type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Qwen Code',      type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'qwen' },
   // Antigravity 是 Google 的 AI IDE（antigravity.google），见 docs/README.antigravity.md。
-  { name: 'Antigravity',    type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'DeerFlow 2.0',   type: 'Agent',  cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'VS Code · Copilot', type: 'IDE', cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Antigravity',    type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'antigravity' },
+  { name: 'DeerFlow 2.0',   type: 'Agent',  cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'deerflow' },
+  { name: 'VS Code · Copilot', type: 'IDE', cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'vscode' },
   // Copilot CLI 与 Claude Code 共用 .claude/skills，别名 copilot -> Claude Code，
   // 它自己没有检测标记，所以必须 --tool 指定。
   { name: 'Copilot CLI',    type: 'CLI',    cmd: 'npx superpowers-zh --tool copilot',           mode: 'manual' },
   // Hermes 官方只自动加载 ~/.hermes/skills/，项目级目录要手写 config.yaml 才被发现，
   // 所以这里给的是 --global 的装法（与 README 的一键安装列一致）。
-  { name: 'Hermes Agent',   type: 'CLI',    cmd: 'npx superpowers-zh --global --tool hermes',   mode: 'global' },
-  { name: 'Claw Code',      type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'OpenClaw',       type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'CodeBuddy',      type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
-  { name: 'CodeArts',       type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Hermes Agent',   type: 'CLI',    cmd: 'npx superpowers-zh --global --tool hermes',   mode: 'global', doc: 'hermes' },
+  { name: 'Claw Code',      type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'claw' },
+  { name: 'OpenClaw',       type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'openclaw' },
+  { name: 'CodeBuddy',      type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'codebuddy' },
+  { name: 'CodeArts',       type: 'IDE',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'codearts' },
   // Cline / Kilo Code 的检测标记是 rules 目录（.clinerules / .kilocode），没建过规则的
   // 项目检测不到，与 README 一致给显式 --tool。
-  { name: 'Cline',          type: 'IDE',    cmd: 'npx superpowers-zh --tool cline',             mode: 'manual' },
-  { name: 'Kilo Code',      type: 'IDE',    cmd: 'npx superpowers-zh --tool kilocode',          mode: 'manual' },
-  { name: 'Crush',          type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto' },
+  { name: 'Cline',          type: 'IDE',    cmd: 'npx superpowers-zh --tool cline',             mode: 'manual', doc: 'cline' },
+  { name: 'Kilo Code',      type: 'IDE',    cmd: 'npx superpowers-zh --tool kilocode',          mode: 'manual', doc: 'kilocode' },
+  { name: 'Crush',          type: 'CLI',    cmd: 'npx superpowers-zh',                          mode: 'auto', doc: 'crush' },
 ];
 
 // ---- 双语文案 ----
@@ -266,6 +284,17 @@ const SPONSORS = [
 // 赞助位是付费展示位，图挂了就是事故。旗舰卡读 img、常规卡读 logo，两条路径
 // 各自需要的字段不同 —— 把 tier 从 flagship 改成 standard 而忘了配 logo，
 // 页面上就是一个静默的碎图。构建时直接拦下来，不让它上线。
+// 工具墙上挂的每个文档链接都必须真的存在 —— 官网链到 GitHub 上一个不存在的
+// docs/README.*.md，就是又一条「编造出处」，而这正是本仓已经栽过的坑。
+function assertToolDocs() {
+  for (const x of TOOLS) {
+    if (!x.doc) continue;
+    const f = join(ROOT, 'docs', `README.${x.doc}.md`);
+    if (!existsSync(f)) throw new Error(`工具 ${x.name} 的文档不存在：docs/README.${x.doc}.md`);
+  }
+}
+assertToolDocs();
+
 function assertSponsors() {
   for (const s of SPONSORS) {
     const need = s.tier === 'flagship' ? ['img', 'w', 'h', 'points'] : ['logo', 'desc'];
@@ -320,6 +349,8 @@ const T = {
     heroLead: '{n} 个经过实战验证的工作方法论 skill —— 从头脑风暴到 TDD，从系统化调试到代码审查。<br>一条命令，自动识别项目里的工具并安装。',
     heroBtn1: '查看安装命令', heroBtn2: 'GitHub 源码',
     stats: ['Skills', '中国原创', '支持工具', '当前版本'],
+    releaseNote: '{tools} 用户请重新安装 —— 此前版本装了不生效。查看完整更新说明',
+    toolDocHint: '{name} 的专属安装指南',
     whyTitle: '为什么选择 superpowers-zh？',
     whySub: '不是又一套提示词模板 —— 是让 AI 真正按工程方法干活的系统化能力。',
     plTitle: '一条龙工作流，每一步都有 skill 把关',
@@ -452,6 +483,8 @@ const T = {
     heroLead: '{n} battle-tested workflow skills — from brainstorming to TDD, systematic debugging to code review.<br>One command auto-detects your tool and installs.',
     heroBtn1: 'Get the command', heroBtn2: 'GitHub',
     stats: ['Skills', 'China-native', 'Tools', 'Version'],
+    releaseNote: '{tools} users should reinstall — earlier versions installed to the wrong place. Read the full release notes',
+    toolDocHint: 'Install guide for {name}',
     whyTitle: 'Why superpowers-zh?',
     whySub: 'Not another prompt-template pack — real engineering methodology that makes AI work properly.',
     plTitle: 'An end-to-end workflow, every step guarded by a skill',
@@ -584,6 +617,8 @@ const T = {
     heroLead: '{n} 個經過實戰驗證的工作方法論 skill —— 從頭腦風暴到 TDD，從系統化除錯到程式碼審查。<br>一條命令，自動識別專案裡的工具並安裝。',
     heroBtn1: '查看安裝命令', heroBtn2: 'GitHub 原始碼',
     stats: ['Skills', '中國原創', '支援工具', '目前版本'],
+    releaseNote: '{tools} 使用者請重新安裝 —— 此前版本裝了不生效。檢視完整更新說明',
+    toolDocHint: '{name} 的專屬安裝指南',
     whyTitle: '為什麼選擇 superpowers-zh？',
     whySub: '不是又一套提示詞範本 —— 是讓 AI 真正按工程方法幹活的系統化能力。',
     plTitle: '一條龍工作流，每一步都有 skill 把關',
@@ -858,7 +893,14 @@ function renderLanding(skills, lang) {
     `<button class="chip${i === 0 ? ' active' : ''}" data-filter="${g.id}">${lang === 'zh' ? g.zh : g.en}</button>`).join('');
   const modeTag = { auto: '', manual: '（--tool）', global: '（--global）' };
   const toolOpts = TOOLS.map((x, i) => `<option value="${i}">${esc(x.name)}${modeTag[x.mode] || ''}</option>`).join('');
-  const toolWall = TOOLS.map(x => `<div class="tool-pill"><span class="tool-name">${esc(x.name)}</span><span class="tool-type">${esc(x.type)}</span></div>`).join('');
+  // 有专属安装文档的工具，pill 直接链过去 —— docs/ 里 22 份指南此前在官网零暴露，
+  // 而「为什么要重装 / 旧布局怎么清 / 该不该用 --global」的答案全在那里。
+  const toolWall = TOOLS.map(x => {
+    const inner = `<span class="tool-name">${esc(x.name)}</span><span class="tool-type">${esc(x.type)}</span>`;
+    return x.doc
+      ? `<a class="tool-pill has-doc" href="${GH_BLOB}/docs/README.${x.doc}.md" target="_blank" rel="noopener" title="${esc(fill(t.toolDocHint, { name: x.name }))}">${inner}<span class="tool-doc" aria-hidden="true">↗</span></a>`
+      : `<div class="tool-pill">${inner}</div>`;
+  }).join('');
   const feats = t.features.map(f => `<article class="feat"><div class="feat-icon">${f.icon}</div><h3>${esc(f.t)}</h3><p>${esc(f.d)}</p></article>`).join('');
   const pipe = t.pipeline.map((p, i) => `<div class="pl-step"><div class="pl-num">${i + 1}</div><div class="pl-body"><b>${esc(p.n)}</b><span>${esc(p.d)}</span></div></div>${i < t.pipeline.length - 1 ? '<div class="pl-arrow">→</div>' : ''}`).join('');
   const ucs = t.usecases.map(u => `<article class="usecase"><span class="uc-tag">${esc(u.tag)}</span><code class="uc-skills">${esc(u.skills)}</code><p>${esc(u.desc)}</p></article>`).join('');
@@ -875,6 +917,11 @@ function renderLanding(skills, lang) {
       <a class="btn btn-primary" href="#install">${t.heroBtn1}</a>
       <a class="btn btn-ghost" href="https://github.com/jnMetaCode/superpowers-zh" target="_blank" rel="noopener">${t.heroBtn2}</a>
     </div>
+    <a class="release-note" href="${GH_BLOB}/RELEASE-NOTES.zh.md" target="_blank" rel="noopener">
+      <span class="rn-ver">v${LATEST.version}</span>
+      <span class="rn-text">${fill(t.releaseNote, { tools: REINSTALL_TOOLS.join(' / ') })}</span>
+      <span class="rn-go" aria-hidden="true">→</span>
+    </a>
     <div class="stats">
       <div><b>${total}</b><span>${t.stats[0]}</span></div>
       <div><b>${cnCount}</b><span>${t.stats[1]}</span></div>
