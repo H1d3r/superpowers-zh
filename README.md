@@ -35,6 +35,18 @@ Chinese community edition of [superpowers](https://github.com/obra/superpowers) 
 
 ## ❤️ 赞助商 &nbsp;<sub>🙏 想出现在这里？联系 **jnMetaCode@qq.com** 赞助</sub>
 
+<p align="center">
+  <a href="https://www.infistar.cc/register?aff=PDVTM2VS&ref_source=link">
+    <img src="assets/sponsors/infistar.jpg" alt="Infistar.cc 无限星河 —— 全模型 API 服务，一个 API Key 接入 Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek，价格低至官方渠道 1 折" width="100%">
+  </a>
+</p>
+
+感谢 [Infistar.cc 无限星河](https://www.infistar.cc/register?aff=PDVTM2VS&ref_source=link) 旗舰赞助本项目！Infistar.cc 提供全模型 API 服务：**一个 API Key 接入** Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek 等主流模型，适配 Claude Code、Codex、Cursor、Windsurf、Kiro 等 AI 编程工具。高可用模型通道与多节点冗余，价格低至官方渠道 **1 折**，稳定承载需求分析、方案规划、TDD、调试、代码审查这类长任务 —— 正好是 superpowers-zh 这套方法论跑起来时最吃稳定性的地方。
+
+🎁 **通过[此链接](https://www.infistar.cc/register?aff=PDVTM2VS&ref_source=link)注册并完成首次调用，即可领取 5 美元等值测试额度！**
+
+<hr>
+
 <table>
 <tr>
 <td width="25%">

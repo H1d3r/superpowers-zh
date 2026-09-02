@@ -128,6 +128,39 @@ const TOOLS = [
 // 注意：链接是赞助方的推广链接，外链一律带 rel="sponsored nofollow noopener"。
 const SPONSORS = [
   {
+    // 旗舰位：赞助商页顶部整块大图 + 两版 README 顶部优先展示。
+    // 旗舰卡读 img（大 banner），不读 logo —— 见下方 assertSponsors 的校验。
+    tier: 'flagship',
+    img: 'infistar.jpg', w: 1269, h: 337, code: '',
+    url: 'https://www.infistar.cc/register?aff=PDVTM2VS&ref_source=link',
+    name: { zh: 'Infistar.cc 无限星河', en: 'Infistar.cc', zht: 'Infistar.cc 無限星河' },
+    tagline: {
+      zh: '全模型 API · 一个 Key 接入 Claude / GPT / Gemini，低至官方 1 折',
+      en: 'All-model API · one key for Claude / GPT / Gemini, from 10% of list price',
+      zht: '全模型 API · 一個 Key 接入 Claude / GPT / Gemini，低至官方 1 折',
+    },
+    alt: {
+      zh: 'Infistar.cc 无限星河 —— 全模型 API 服务，一个 API Key 接入 Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek，价格低至官方渠道 1 折',
+      en: 'Infistar.cc — all-model API service: one API key for Claude, ChatGPT, Gemini, Kimi, GLM and DeepSeek, from 10% of official pricing',
+      zht: 'Infistar.cc 無限星河 —— 全模型 API 服務，一個 API Key 接入 Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek，價格低至官方渠道 1 折',
+    },
+    desc: {
+      zh: '全模型 API 服务：一个 API Key 接入 Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek 等主流模型，适配 Claude Code、Codex、Cursor、Windsurf、Kiro 等 AI 编程工具。高可用通道与多节点冗余，价格低至官方渠道 1 折，稳定承载需求分析、方案规划、TDD、调试、代码审查这类长任务 —— 正好是 superpowers-zh 这套方法论跑起来时最吃稳定性的地方。',
+      en: 'An all-model API service: one API key for Claude, ChatGPT, Gemini, Kimi, GLM and DeepSeek, wired for Claude Code, Codex, Cursor, Windsurf and Kiro. High-availability channels with multi-node redundancy, from 10% of official pricing, built to hold up across long tasks — requirements analysis, planning, TDD, debugging, code review — exactly where the superpowers-zh workflow leans hardest on stability.',
+      zht: '全模型 API 服務：一個 API Key 接入 Claude、ChatGPT、Gemini、Kimi、GLM、DeepSeek 等主流模型，適配 Claude Code、Codex、Cursor、Windsurf、Kiro 等 AI 編程工具。高可用通道與多節點冗餘，價格低至官方渠道 1 折，穩定承載需求分析、方案規劃、TDD、除錯、程式碼審查這類長任務 —— 正好是 superpowers-zh 這套方法論跑起來時最吃穩定性的地方。',
+    },
+    perk: {
+      zh: '🎁 通过本页链接注册并完成首次调用，即可领取 5 美元等值测试额度',
+      en: '🎁 Sign up via this link and make your first call to claim $5 in test credit',
+      zht: '🎁 透過本頁連結註冊並完成首次呼叫，即可領取 5 美元等值測試額度',
+    },
+    perkShort: {
+      zh: '注册并完成首次调用领 5 美元等值测试额度',
+      en: '$5 test credit after your first call',
+      zht: '註冊並完成首次呼叫領 5 美元等值測試額度',
+    },
+  },
+  {
     tier: 'standard',
     img: 'compshare.jpg', w: 800, h: 368, code: '',
     logo: 'logo-compshare-icon.png',
@@ -184,6 +217,31 @@ const SPONSORS = [
     perkShort: { zh: '首次购买 9 折优惠', en: '10% off your first purchase', zht: '首次購買 9 折優惠' },
   },
 ];
+
+// 赞助位是付费展示位，图挂了就是事故。旗舰卡读 img、常规卡读 logo，两条路径
+// 各自需要的字段不同 —— 把 tier 从 flagship 改成 standard 而忘了配 logo，
+// 页面上就是一个静默的碎图。构建时直接拦下来，不让它上线。
+function assertSponsors() {
+  for (const s of SPONSORS) {
+    const need = s.tier === 'flagship' ? ['img', 'w', 'h'] : ['logo'];
+    const missing = need.filter(k => !s[k]);
+    if (missing.length) {
+      throw new Error(`赞助商 ${s.name?.zh || '?'}（tier: ${s.tier}）缺字段：${missing.join(', ')}`);
+    }
+    for (const f of [s.img, s.logo].filter(Boolean)) {
+      if (!existsSync(join(ROOT, 'assets', 'sponsors', f))) {
+        throw new Error(`赞助商 ${s.name?.zh || '?'} 的素材不存在：assets/sponsors/${f}`);
+      }
+    }
+    for (const k of ['name', 'tagline', 'alt', 'desc', 'perk', 'perkShort']) {
+      if (s.tier !== 'flagship' && k === 'tagline') continue;   // 常规卡不展示 tagline
+      for (const lang of ['zh', 'en', 'zht']) {
+        if (!s[k]?.[lang]) throw new Error(`赞助商 ${s.name?.zh || '?'} 的 ${k} 缺 ${lang} 文案`);
+      }
+    }
+  }
+}
+assertSponsors();
 
 const T = {
   zh: {
@@ -246,7 +304,7 @@ const T = {
         { q: '如何成为 superpowers-zh 的赞助商？', a: '邮件联系 jnMetaCode@qq.com，说明你的产品、目标人群和想要的展位形式。我们会回复可选方案、素材要求和上线时间。' },
         { q: '有哪些合作方案？', a: '分旗舰位与常规位两档：旗舰位在本页顶部单独成块展示，常规位在「更多赞助商」卡片区。两档都含 GitHub 简繁双版 README 展位与官网三语站点露出。具体以邮件沟通为准。' },
         { q: '谈完多久可以上线？', a: '素材齐全后改动会随下一次站点构建发布 —— 本站接的是仓库自动部署，推送即上线，通常当天可见。' },
-        { q: '需要准备哪些素材？', a: '一张横版 banner（参考现有赞助位约 800×368，JPG / PNG）、一句话定位、一段 100 字左右的介绍、落地链接，以及给本项目用户的专属优惠码或福利（可选）。' },
+        { q: '需要准备哪些素材？', a: '一张横版 banner（旗舰位约 1269×337，常规位约 800×368，JPG / PNG）、一句话定位、一段 100 字左右的介绍、落地链接，以及给本项目用户的专属优惠码或福利（可选）。常规位还需一枚方形小图标（约 36×36 显示）。' },
       ],
       listTitle: '当前赞助商',
       listSub: '感谢他们持续支持本项目，并为本项目用户提供专属福利。',
@@ -378,7 +436,7 @@ const T = {
         { q: 'How do I become a sponsor?', a: 'Email jnMetaCode@qq.com with your product, target audience and the placement you have in mind. We will reply with options, asset specs and timing.' },
         { q: 'What tiers are there?', a: 'Two: flagship, which gets its own block at the top of this page, and standard, which appears in the sponsor card grid. Both include placement in the Simplified and Traditional Chinese READMEs on GitHub and across all three site locales. Exact terms are settled over email.' },
         { q: 'How soon does it go live?', a: 'Once assets are in, the change ships with the next site build — the site deploys straight from the repo, so it is usually live the same day.' },
-        { q: 'What assets do you need?', a: 'A landscape banner (existing slots are around 800×368, JPG / PNG), a one-line positioning statement, a short paragraph of copy, a landing URL, and optionally a promo code or perk for this project\u2019s users.' },
+        { q: 'What assets do you need?', a: 'A landscape banner (around 1269×337 for the flagship slot, 800×368 for standard, JPG / PNG), a one-line positioning statement, a short paragraph of copy, a landing URL, and optionally a promo code or perk for this project\u2019s users. Standard slots also need a square icon (shown at 36×36).' },
       ],
       listTitle: 'Current sponsors',
       listSub: 'Thanks for backing this project — and for the perks they offer to its users.',
@@ -510,7 +568,7 @@ const T = {
         { q: '如何成為 superpowers-zh 的贊助商？', a: '郵件聯絡 jnMetaCode@qq.com，說明你的產品、目標人群和想要的展位形式。我們會回覆可選方案、素材要求和上線時間。' },
         { q: '有哪些合作方案？', a: '分旗艦位與常規位兩檔：旗艦位在本頁頂部單獨成塊展示，常規位在「更多贊助商」卡片區。兩檔都含 GitHub 簡繁雙版 README 展位與官網三語站點露出。具體以郵件溝通為準。' },
         { q: '談完多久可以上線？', a: '素材齊全後改動會隨下一次站點構建釋出 —— 本站接的是倉庫自動部署，推送即上線，通常當天可見。' },
-        { q: '需要準備哪些素材？', a: '一張橫版 banner（參考現有贊助位約 800×368，JPG / PNG）、一句話定位、一段 100 字左右的介紹、落地連結，以及給本專案使用者的專屬優惠碼或福利（可選）。' },
+        { q: '需要準備哪些素材？', a: '一張橫版 banner（旗艦位約 1269×337，常規位約 800×368，JPG / PNG）、一句話定位、一段 100 字左右的介紹、落地連結，以及給本專案使用者的專屬優惠碼或福利（可選）。常規位還需一枚方形小圖示（約 36×36 顯示）。' },
       ],
       listTitle: '目前贊助商',
       listSub: '感謝他們持續支持本專案，並為本專案使用者提供專屬福利。',
