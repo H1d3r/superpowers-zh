@@ -1146,6 +1146,79 @@ ${flagSection}${moreSection}
 <script>window.__I18N__={copy:${JSON.stringify(t.copy)},copied:${JSON.stringify(t.copied)},expand:${JSON.stringify(sp.expand)},collapse:${JSON.stringify(sp.collapse)}};</script>`;
 }
 
+// ---- JSON-LD 结构化数据 ----
+// 站上有 7 条 FAQ、完整的软件信息与 20 个 skill 文档页，却没有任何结构化标记：
+// 搜索引擎拿不到富摘要，AI 抓取时只能从正文里猜。
+//
+// 关于 CSP：ld+json 是**数据块不是可执行脚本**，浏览器不会执行它，爬虫读的也是
+// HTML 源码而非执行结果 —— 所以不需要进 script-src 的 hash 白名单。
+//
+// 关于 </script> 逃逸：JSON.stringify 不转义 '<'，正文里若出现 </script> 就会
+// 提前闭合标签。统一把 < 转成 \u003c，这是 JSON 字符串里的合法写法。
+function ldJson(obj) {
+  return `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+}
+
+function homeSchema(lang, t, skills) {
+  const url = SITE_URL + (lang === 'zh' ? '/' : lang === 'en' ? '/en/' : '/zh-Hant/');
+  return ldJson({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite', '@id': url + '#website', url, name: 'superpowers-zh',
+        description: t.desc, inLanguage: t.htmlLang,
+      },
+      {
+        '@type': 'SoftwareApplication', '@id': url + '#software',
+        name: 'superpowers-zh', description: t.desc, url,
+        applicationCategory: 'DeveloperApplication',
+        operatingSystem: 'macOS, Windows, Linux',
+        softwareVersion: PKG.version,
+        image: `${SITE_URL}/assets/og-image.jpg`,
+        license: 'https://opensource.org/licenses/MIT',
+        codeRepository: 'https://github.com/jnMetaCode/superpowers-zh',
+        downloadUrl: 'https://www.npmjs.com/package/superpowers-zh',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        author: { '@type': 'Person', name: 'jnMetaCode', url: 'https://github.com/jnMetaCode' },
+      },
+      {
+        '@type': 'FAQPage', '@id': url + '#faq',
+        mainEntity: t.faq.map(f => ({
+          '@type': 'Question', name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      },
+    ],
+  });
+}
+
+function skillSchema(skill, lang, t) {
+  const base = SITE_URL + (lang === 'zh' ? '' : lang === 'en' ? '/en' : '/zh-Hant');
+  return ldJson({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'TechArticle',
+        headline: lang === 'en' ? skill.titleEn : skill.title,
+        description: lang === 'zh' ? skill.desc : (skill.descEn || skill.desc),
+        url: `${base}/skills/${skill.name}`,
+        inLanguage: 'zh-CN',                       // 正文一律中文，英文站也是（页面顶部有提示）
+        isPartOf: { '@id': base + '/#website' },
+        license: 'https://opensource.org/licenses/MIT',
+        author: { '@type': 'Person', name: 'jnMetaCode' },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'superpowers-zh', item: base + '/' },
+          { '@type': 'ListItem', position: 2, name: t.nav.skills, item: base + '/#skills' },
+          { '@type': 'ListItem', position: 3, name: lang === 'en' ? skill.titleEn : skill.title },
+        ],
+      },
+    ],
+  });
+}
+
 // ---- skill 详情(操作文档)页正文 ----
 function renderDetail(skill, lang) {
   const t = T[lang];
@@ -1216,6 +1289,7 @@ function build() {
     writeFileSync(join(DIST, ...dirParts, 'index.html'), layout({
       lang: L.code, base: homeBase, title: t.title, desc: t.desc,
       body: renderLanding(skills, L.code), pageClean: '', pageFile: '',
+      extraHead: homeSchema(L.code, t, skills) + '\n',
     }));
     // 赞助商页（每种语言一份，与首页同级）
     writeFileSync(join(DIST, ...dirParts, 'sponsors.html'), layout({
@@ -1231,6 +1305,7 @@ function build() {
         title: `${title} · superpowers-zh`, desc,
         body: renderDetail(s, L.code),
         pageClean: `skills/${s.name}`, pageFile: `skills/${s.name}.html`,
+        extraHead: skillSchema(s, L.code, t) + '\n',
       }));
     }
   }
@@ -1274,6 +1349,24 @@ function build() {
     urls.map(u => `  <url><loc>${SITE_URL}${u}</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>${u === '/' ? '1.0' : (u.endsWith('/') ? '0.8' : '0.7')}</priority></url>`).join('\n') +
     '\n</urlset>\n';
   writeFileSync(join(DIST, 'sitemap.xml'), sitemap);
+
+  // 结构化数据一旦转义写错（引号、</script>、CJK），浏览器和爬虫都只是**静默忽略**，
+  // 页面看不出任何异常。所以构建时逐页把它 JSON.parse 一遍，坏了就直接失败。
+  const validateLd = (dir) => {
+    let n = 0;
+    for (const ent of readdirSync(dir, { withFileTypes: true })) {
+      const f = join(dir, ent.name);
+      if (ent.isDirectory()) { n += validateLd(f); continue; }
+      if (!ent.name.endsWith('.html')) continue;
+      const html = readFileSync(f, 'utf8');
+      for (const m of html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) {
+        try { JSON.parse(m[1]); n++; }
+        catch (e) { throw new Error(`${f} 里的 JSON-LD 不是合法 JSON：${e.message}`); }
+      }
+    }
+    return n;
+  };
+  const ldCount = validateLd(DIST);
 
   // 收集所有生成页面里的内联 <script> 内容，算 SHA-256 作为 CSP hash 白名单。
   // 本站脚本由本生成器产出（可信），用 hash 即可严格禁用 'unsafe-inline'/'unsafe-eval'
@@ -1329,6 +1422,7 @@ function build() {
     '/app.js\n  Cache-Control: public, max-age=31536000, immutable\n');
 
   const pages = LANGS.length * (2 + skills.length);
+  console.log(`   结构化数据：${ldCount} 个 JSON-LD 块，均通过 JSON.parse 校验`);
   console.log(`✅ 生成 ${pages} 个页面：${LANGS.length} 语言（${LANGS.map(l => l.code).join('/')}）× (首页 + 赞助商页 + ${skills.length} 个 skill 详情页) → ${DIST}`);
 }
 
